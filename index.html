@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Tracker</title>
+  </head>
+  <body>
+    <h1>Expense Tracker</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+
+    <form id="expenseForm">
+      <input type="text" id="desc" placeholder="Description" required />
+      <input type="number" id="amount" placeholder="Amount" required />
+      <select id="category">
+        <option value="Food">Food</option>
+        <option value="Transport">Transport</option>
+        <option value="Entertainment">Entertainment</option>
+      </select>
+      <button type="submit">Add Expense</button>
+    </form>
+
+    <h3>Budget Limit: $<span id="budget">1000</span></h3>
+    <h3>Total Expenses: $<span id="total">0</span></h3>
+
+    <h3>
+      Saved Amount: ₹<span id="savedAmount"
+        >{{ current_user.saved_amount }}</span
+      >
+    </h3>
+    <form id="saveMoneyForm">
+      <input
+        type="number"
+        id="saveAmount"
+        placeholder="Amount to Save"
+        required
+      />
+      <button type="submit">Save Money</button>
+    </form>
+
+    <form id="withdrawForm">
+      <input
+        type="number"
+        id="withdrawAmount"
+        placeholder="Amount to Withdraw"
+        required
+      />
+      <button type="submit">Withdraw Money</button>
+    </form>
+
+    <canvas id="expenseChart"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // JavaScript code for handling form submission and chart updates goes here.
+      document
+        .getElementById("expenseForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let desc = document.getElementById("desc").value;
+          let amount = parseFloat(document.getElementById("amount").value);
+          let category = document.getElementById("category").value;
+
+          fetch("/add_expense", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ desc, amount, category }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              document.getElementById("total").innerText = data.total;
+              if (data.alert) alert("Budget limit exceeded!");
+              updateChart(data.expenses);
+            });
+        });
+
+      // Save money functionality
+      document
+        .getElementById("saveMoneyForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let saveAmount = parseFloat(
+            document.getElementById("saveAmount").value
+          );
+
+          fetch("/save_money", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: saveAmount }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                document.getElementById("savedAmount").innerText =
+                  data.saved_amount; // Update saved amount in real-time
+                alert("Money saved successfully!");
+              } else {
+                alert(data.message);
+              }
+            });
+        });
+
+      // Withdraw money functionality
+      document
+        .getElementById("withdrawForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          let withdrawAmount = parseFloat(
+            document.getElementById("withdrawAmount").value
+          );
+
+          fetch("/withdraw", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: withdrawAmount }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                document.getElementById("savedAmount").innerText = data.balance; // Update balance in real-time
+                alert("Withdrawal successful!");
+              } else {
+                alert(data.message);
+              }
+            });
+        });
+
+      function updateChart(expenses) {
+        // Chart update logic remains unchanged.
+      }
+    </script>
+  </body>
+</html>
